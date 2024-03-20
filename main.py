@@ -1,141 +1,172 @@
 from tkinter import *
 from tkinter import filedialog, ttk
+import sv_ttk
 from pygame import mixer
 import os
 from PIL import Image, ImageTk
 import eyed3
-import sv_ttk
+import threading
 import time
 
+# Initialize the mixer
 mixer.init()
 
-# App Initialization
-app = Tk()
-app.title('Music Player')
-app.geometry('485x700')
-app.resizable(False, False)
-app.iconbitmap('icon.ico')
-sv_ttk.set_theme('dark')
 
-musicFrame = ttk.Frame(app, relief=RIDGE)
-musicFrame.place(x=0, y=530, width=485, height=170)
+class MusicPlayerApp:
+    def __init__(self, root):
+        # Initialize the Tkinter root window
+        self.root = root
+        self.root.title('Music Player')
+        self.root.geometry('485x700')
+        self.root.resizable(False, False)
+        self.root.iconbitmap('icon.ico')
+        sv_ttk.set_theme('dark')
+        # Initialize instance variables
+        self.currentSong = None
+        self.paused = False
+        self.update_id = None  # Store the ID for progress bar update
 
-lowerFrame = ttk.Frame(app, width=485, height=100)
-lowerFrame.place(x=0, y=400)
+        # Setup UI
+        self.setupUI()
 
-# Global Variables
-currentSong = None
-progressBar = None
-totalLength = None
-currentTime = None
-paused = False
+        # Start the audio playback thread
+        self.audio_thread = threading.Thread(target=self.playAudio)
+        self.audio_thread.daemon = True  # Daemonize the thread
+        self.audio_thread.start()
 
+    def playAudio(self):
+        while True:
+            if self.currentSong and mixer.music.get_busy() and not self.paused:
+                # No need to update UI directly here
+                time.sleep(0.1)  # Adjust as needed for smoother playback
+            else:
+                # If no song is playing, wait for a short duration
+                time.sleep(0.1)
 
-# Play Music
-def playMusic():
-    global paused
-    global currentSong
-    if paused:
-        mixer.music.unpause()
-        paused = False
-    else:
-        musicName = playlist.get(ACTIVE)
-        currentSong = musicName
-        mixer.music.load(musicName)
-        mixer.music.play()
+    def setupUI(self):
+        # Create the music frame
+        self.musicFrame = ttk.Frame(self.root, relief=RIDGE)
+        self.musicFrame.place(x=0, y=530, width=485, height=170)
 
-        # Get the total length of the song
-        audio = eyed3.load(musicName)
-        global totalLength
-        totalLength = audio.info.time_secs
+        # Create the lower frame
+        self.lowerFrame = ttk.Frame(self.root, width=485, height=100)
+        self.lowerFrame.place(x=0, y=400)
 
+        # Create buttons
+        ttk.Button(self.root, text='Play', width=12, command=self.playMusic).place(x=120, y=455)
+        ttk.Button(self.root, text='Pause', width=12, command=self.pauseMusic).place(x=255, y=455)
+
+        # Create time label
+        self.timeLabel = Label(self.root, text="")
+        self.timeLabel.place(x=210, y=410)
+
+        # Create progress bar
+        self.progressBar = ttk.Progressbar(self.lowerFrame, orient=HORIZONTAL, length=430, mode='determinate')
+        self.progressBar.place(x=27, y=0)
+
+        # Create browse music button and playlist
+        ttk.Button(self.root, text='Browse Music', width=58, command=self.addMusic).place(x=0, y=499)
+        self.scroll = Scrollbar(self.musicFrame)
+        self.playlist = Listbox(self.musicFrame, width=100, bg="#333333", fg="grey", selectbackground="lightblue",
+                                cursor="hand2", bd=0, yscrollcommand=self.scroll.set)
+        self.scroll.config(command=self.playlist.yview)
+        self.scroll.pack(side=RIGHT, fill=Y)
+        self.playlist.pack(side=RIGHT, fill=BOTH)
+
+    def updateUI(self):
+        while True:
+            if self.currentSong and mixer.music.get_busy() and not self.paused:
+                elapsedTime = mixer.music.get_pos() / 1000  # Current playback position in seconds
+                audio = eyed3.load(self.currentSong)
+                totalLength = audio.info.time_secs
+                progressPercent = (elapsedTime / totalLength) * 100
+
+                # Update UI elements (progress bar, timestamp, etc.)
+                self.progressBar['value'] = progressPercent
+                remainingTime = totalLength - elapsedTime
+                mins, secs = divmod(remainingTime, 60)
+                self.timeLabel.config(text=f"Time Left: {int(mins)}:{int(secs):02d}")
+
+            time.sleep(0.1)  # Adjust as needed for smoother UI updates
+
+    def playMusic(self):
+        # Play the selected music
+        if self.paused:
+            mixer.music.unpause()
+            self.paused = False
+            self.updateProgressBar()  # Resume updating the progress bar
+        else:
+            musicName = self.playlist.get(ACTIVE)
+            self.currentSong = musicName
+            mixer.music.load(musicName)
+            mixer.music.play()
+
+            # Cancel any scheduled updates from the previous song
+            if self.update_id:
+                self.root.after_cancel(self.update_id)
+
+            audio = eyed3.load(musicName)
+            totalLength = audio.info.time_secs
+            self.updateProgressBar(totalLength)  # Start updating the progress bar for the new song
+
+    def pauseMusic(self):
+        # Pause the music
+        mixer.music.pause()
+        self.paused = True
+
+    def updateProgressBar(self, totalLength=None):
         # Update the progress bar
-        updateProgressBar()
+        if totalLength is None:
+            audio = eyed3.load(self.currentSong)
+            totalLength = audio.info.time_secs
+
+        if mixer.music.get_busy() and not self.paused:
+            elapsedTime = mixer.music.get_pos() / 1000
+            progressPercent = (elapsedTime / totalLength) * 100
+            self.progressBar['value'] = progressPercent
+            remainingTime = totalLength - elapsedTime
+            mins, secs = divmod(remainingTime, 60)
+            self.timeLabel.config(text=f"Time Left: {int(mins)}:{int(secs):02d}")
+            self.update_id = self.root.after(1000, lambda: self.updateProgressBar(
+                totalLength))  # Schedule next update after 1 second
+
+    def addMusic(self):
+        # Browse for music files and add them to the playlist
+        path = filedialog.askdirectory()
+        if path:
+            os.chdir(path)
+            songs = os.listdir(path)
+
+            self.playlist.delete(0, END)
+
+            for song in songs:
+                if song.endswith('.mp3'):
+                    self.playlist.insert(END, song)
+                    self.displayAlbumArt(song)
+
+    def displayAlbumArt(self, filename):
+        # Display album art if available
+        audiofile = eyed3.load(filename)
+        if audiofile.tag and audiofile.tag.images:
+            imageData = audiofile.tag.images[0].image_data
+            imageExtension = audiofile.tag.images[0].mime_type.split('/')[-1]
+            albumArtPath = f"{filename[:-4]}.{imageExtension}"
+            with open(albumArtPath, "wb") as imgFile:
+                imgFile.write(imageData)
+
+            image = Image.open(albumArtPath)
+            image.thumbnail((485, 377))
+            photo = ImageTk.PhotoImage(image)
+            label = ttk.Label(image=photo)
+            label.image = photo
+            label.place(x=55, y=0, width=485, height=400)
+
+    def __del__(self):
+        # Clean up resources when the application is closed
+        mixer.quit()
 
 
-# Update the progress bar
-def updateProgressBar():
-    global progressBar
-    global totalLength
-    global currentTime
-
-    if totalLength is not None:
-        elapsedTime = mixer.music.get_pos() / 1000  # Convert milliseconds to seconds
-        currentTime = elapsedTime
-        progressPercent = (elapsedTime / totalLength) * 100
-        progressBar['value'] = progressPercent
-        remainingTime = totalLength - elapsedTime
-        mins, secs = divmod(remainingTime, 60)
-        progressBar.after(1000, updateProgressBar)  # Update every second
-        timeLabel.config(text=f"Time Left: {int(mins)}:{int(secs):02d}")
-
-
-# Pause Music
-def pauseMusic():
-    global paused
-    mixer.music.pause()
-    paused = True
-
-
-# Browse files for music
-def addMusic():
-    path = filedialog.askdirectory()
-    if path:
-        os.chdir(path)
-        songs = os.listdir(path)
-
-        playlist.delete(0, END)
-
-        for song in songs:
-            if song.endswith('.mp3'):
-                playlist.insert(END, song)
-
-                # Display album art if available
-                albumArt = getAlbumArt(song)
-                if albumArt:
-                    image = Image.open(albumArt)
-                    image.thumbnail((485, 377))  # Resize the image to fit label dimensions
-                    photo = ImageTk.PhotoImage(image)
-                    # Ensure photo reference is kept
-                    label = ttk.Label(image=photo)
-                    label.image = photo  # Keep reference to the image
-                    label.place(x=55, y=0, width=485, height=400)  # Adjust placement as necessary
-                    app.update()  # Update the GUI to reflect changes
-
-
-# Get album art from MP3 file
-def getAlbumArt(filename):
-    audiofile = eyed3.load(filename)
-    if audiofile.tag and audiofile.tag.images:
-        image_data = audiofile.tag.images[0].image_data
-        image_extension = audiofile.tag.images[0].mime_type.split('/')[-1]
-        albumArtPath = f"{filename[:-4]}.{image_extension}"
-        with open(albumArtPath, "wb") as img_file:
-            img_file.write(image_data)
-        return albumArtPath
-    return None
-
-
-# Buttons
-playButton = ttk.Button(app, text='Play', width=12, command=playMusic)
-playButton.place(x=120, y=455)
-ttk.Button(app, text='Pause', width=12, command=pauseMusic).place(x=255, y=455)
-
-# Time Labels
-timeLabel = Label(app, text="")
-timeLabel.place(x=210, y=410)
-
-# Progress bar
-progressBar = ttk.Progressbar(lowerFrame, orient=HORIZONTAL, length=430, mode='determinate')
-progressBar.place(x=27, y=0)
-
-# Button and Music Box
-ttk.Button(app, text='Browse Music', width=58, command=addMusic).place(x=0, y=499)
-scroll = Scrollbar(musicFrame)
-playlist = Listbox(musicFrame, width=100, bg="#333333", fg="grey", selectbackground="lightblue", cursor="hand2", bd=0,
-                   yscrollcommand=scroll.set)
-scroll.config(command=playlist.yview)
-scroll.pack(side=RIGHT, fill=Y)
-playlist.pack(side=RIGHT, fill=BOTH)
-
-app.mainloop()
+if __name__ == "__main__":
+    app = Tk()
+    MusicPlayerApp(app)
+    app.mainloop()
