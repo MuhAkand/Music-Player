@@ -1,23 +1,24 @@
 from tkinter import *
-from tkinter import filedialog
+from tkinter import filedialog, ttk
 from pygame import mixer
 import os
 from PIL import Image, ImageTk
 import eyed3
+import sv_ttk
 mixer.init()
 
 # App Initialization
 app = Tk()
 app.title('Music Player')
 app.geometry('485x700')
-app.config(bg='#2A2D34')
 app.resizable(False, False)
 app.iconbitmap('icon.ico')
+sv_ttk.set_theme('dark')
 
-musicFrame = Frame(app, bd=2, relief=RIDGE)
-musicFrame.place(x=0, y=530, width=485, height=150)
+musicFrame = ttk.Frame(app, relief=RIDGE)
+musicFrame.place(x=0, y=530, width=485, height=170)
 
-lowerFrame = Frame(app, bg='#30C5FF', width=485, height=100)
+lowerFrame = ttk.Frame(app, width=485, height=100)
 lowerFrame.place(x=0, y=400)
 
 
@@ -42,20 +43,20 @@ def addMusic():
             if song.endswith('.mp3'):
                 Playlist.insert(END, song)
                 # Display album art if available
-                album_art = get_album_art(song)
+                album_art = getAlbumArt(song)
                 if album_art:
                     image = Image.open(album_art)
-                    image.thumbnail((485, 400))  # Resize the image to fit label dimensions
+                    image.thumbnail((485, 377))  # Resize the image to fit label dimensions
                     photo = ImageTk.PhotoImage(image)
                     # Ensure photo reference is kept
-                    label = Label(image=photo, bg='#2A2D34')
+                    label = ttk.Label(image=photo)
                     label.image = photo  # Keep reference to the image
-                    label.place(x=0, y=0, width=485, height=400)  # Adjust placement as necessary
+                    label.place(x=55, y=0, width=485, height=400)  # Adjust placement as necessary
                     app.update()  # Update the GUI to reflect changes
 
 
 # Get album art from MP3 file
-def get_album_art(filename):
+def getAlbumArt(filename):
     audiofile = eyed3.load(filename)
     if audiofile.tag and audiofile.tag.images:
         image_data = audiofile.tag.images[0].image_data
@@ -68,13 +69,13 @@ def get_album_art(filename):
 
 
 # Buttons
-Button(app, text='Play', height=6, width=12, command=playMusic).place(x=200, y=400)
-Button(app, text='Unpause', height=6, width=12, command=mixer.music.unpause).place(x=50, y=400)
-Button(app, text='Pause', height=6, width=12, command=mixer.music.pause).place(x=340, y=400)
+ttk.Button(app, text='Play', width=12, command=playMusic).place(x=185, y=420)
+ttk.Button(app, text='Unpause', width=12, command=mixer.music.unpause).place(x=35, y=420)
+ttk.Button(app, text='Pause', width=12, command=mixer.music.pause).place(x=330, y=420)
 
 
 # Button and Music Box
-Button(app, text='Browse Music', width=68, height=1, fg='#30C5FF', bg='#2A2D34', command=addMusic).place(x=0, y=500)
+ttk.Button(app, text='Browse Music', width=58, command=addMusic).place(x=0, y=500)
 Scroll = Scrollbar(musicFrame)
 Playlist = Listbox(musicFrame, width=100, bg="#333333", fg="grey", selectbackground="lightblue", cursor="hand2", bd=0,
                    yscrollcommand=Scroll.set)
