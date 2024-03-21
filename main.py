@@ -1,5 +1,5 @@
 from tkinter import *
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, font
 import sv_ttk
 from pygame import mixer
 import os
@@ -58,7 +58,7 @@ class MusicPlayerApp:
 
         # Create time label
         self.timeLabel = Label(self.root, text="")
-        self.timeLabel.place(x=210, y=410)
+        self.timseLabel.place(x=210, y=410)
 
         # Create progress bar
         self.progressBar = ttk.Progressbar(self.lowerFrame, orient=HORIZONTAL, length=430, mode='determinate')
@@ -105,6 +105,9 @@ class MusicPlayerApp:
             if self.update_id:
                 self.root.after_cancel(self.update_id)
 
+            # Display album art for the new song
+            self.displayAlbumArt(musicName)
+
             audio = eyed3.load(musicName)
             totalLength = audio.info.time_secs
             self.updateProgressBar(totalLength)  # Start updating the progress bar for the new song
@@ -129,8 +132,16 @@ class MusicPlayerApp:
             self.timeLabel.config(text=f"Time Left: {int(mins)}:{int(secs):02d}")
             self.update_id = self.root.after(1000, lambda: self.updateProgressBar(
                 totalLength))  # Schedule next update after 1 second
+        else:
+            # Reset progress bar and time label
+            self.progressBar['value'] = 0
+            self.timeLabel.config(text="Time Left: 0:00")
 
     def addMusic(self):
+        # Stop the currently playing song, if any
+        if mixer.music.get_busy():
+            mixer.music.stop()
+
         # Browse for music files and add them to the playlist
         path = filedialog.askdirectory()
         if path:
@@ -144,10 +155,12 @@ class MusicPlayerApp:
                     self.playlist.insert(END, song)
                     self.displayAlbumArt(song)
 
-    def displayAlbumArt(self, filename):
-        # Display album art if available
+    @staticmethod
+    def displayAlbumArt(filename):
+        # Display album art if available, or a blank white square if not available
         audiofile = eyed3.load(filename)
         if audiofile.tag and audiofile.tag.images:
+            # Album art available, display it
             imageData = audiofile.tag.images[0].image_data
             imageExtension = audiofile.tag.images[0].mime_type.split('/')[-1]
             albumArtPath = f"{filename[:-4]}.{imageExtension}"
@@ -156,10 +169,15 @@ class MusicPlayerApp:
 
             image = Image.open(albumArtPath)
             image.thumbnail((485, 377))
-            photo = ImageTk.PhotoImage(image)
-            label = ttk.Label(image=photo)
-            label.image = photo
-            label.place(x=55, y=0, width=485, height=400)
+        else:
+            # No album art available, create a blank white square image
+            image = Image.new('RGB', (380, 377), color='white')
+
+        # Display the image
+        photo = ImageTk.PhotoImage(image)
+        label = ttk.Label(image=photo)
+        label.image = photo
+        label.place(x=55, y=0, width=485, height=400)
 
     def __del__(self):
         # Clean up resources when the application is closed
