@@ -58,7 +58,7 @@ class MusicPlayerApp:
 
         # Create time label
         self.timeLabel = Label(self.root, text="")
-        self.timseLabel.place(x=210, y=410)
+        self.timeLabel.place(x=210, y=410)
 
         # Create progress bar
         self.progressBar = ttk.Progressbar(self.lowerFrame, orient=HORIZONTAL, length=430, mode='determinate')
