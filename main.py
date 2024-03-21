@@ -1,5 +1,5 @@
 from tkinter import *
-from tkinter import filedialog, ttk, font
+from tkinter import filedialog, ttk
 import sv_ttk
 from pygame import mixer
 import os
