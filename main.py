@@ -14,6 +14,7 @@ mixer.init()
 
 
 def change_theme():
+    # Function to change the theme between dark and light
     current_theme = sv_ttk.get_theme()
     if current_theme == 'dark':
         sv_ttk.set_theme('light')
@@ -30,6 +31,7 @@ class MusicPlayerApp:
         self.setup_audio_thread()
 
     def setup_window(self):
+        # Set up the main window
         self.root.title('Music Player')
         self.root.geometry('485x700')
         self.root.resizable(False, False)
@@ -37,11 +39,13 @@ class MusicPlayerApp:
         sv_ttk.set_theme('dark')
 
     def setup_variables(self):
+        # Initialize variables
         self.current_song = None
         self.paused = False
         self.update_id = None
 
     def setup_ui(self):
+        # Set up the user interface components
         self.setup_music_frame()
         self.setup_lower_frame()
         self.setup_buttons()
@@ -50,28 +54,34 @@ class MusicPlayerApp:
         self.setup_playlist()
 
     def setup_music_frame(self):
+        # Set up frame for displaying album art and song information
         self.music_frame = ttk.Frame(self.root, relief=RIDGE)
         self.music_frame.place(x=0, y=530, width=485, height=170)
 
     def setup_lower_frame(self):
+        # Set up lower frame for control buttons and progress bar
         self.lower_frame = ttk.Frame(self.root, width=485, height=100)
         self.lower_frame.place(x=0, y=400)
 
     def setup_buttons(self):
+        # Set up control buttons
         ttk.Button(self.root, text='Play', width=12, command=self.play_music).place(x=120, y=455)
         ttk.Button(self.root, text='Pause', width=12, command=self.pause_music).place(x=255, y=455)
         ttk.Button(self.root, text='Browse Music', width=58, command=self.add_music).place(x=0, y=499)
-        ttk.Button(self.root, text='☉', width=2, command=change_theme).place(x=0, y=0)
+        ttk.Button(self.root, text='☉', width=2, command=change_theme).place(x=0, y=0)  # Theme change button
 
     def setup_time_label(self):
+        # Label to display remaining time
         self.time_label = Label(self.root, text='')
         self.time_label.place(x=210, y=410)
 
     def setup_progress_bar(self):
+        # Progress bar to indicate playback progress
         self.progress_bar = ttk.Progressbar(self.lower_frame, orient=HORIZONTAL, length=430, mode='determinate')
         self.progress_bar.place(x=27, y=0)
 
     def setup_playlist(self):
+        # Playlist to display available songs
         self.scroll = Scrollbar(self.music_frame)
         self.playlist = Listbox(self.music_frame, width=100, bg='#333333', fg='grey', selectbackground='lightblue',
                                 cursor='hand2', bd=0, yscrollcommand=self.scroll.set)
@@ -80,11 +90,13 @@ class MusicPlayerApp:
         self.playlist.pack(side=RIGHT, fill=BOTH)
 
     def setup_audio_thread(self):
+        # Start a thread for handling audio playback
         self.audio_thread = threading.Thread(target=self.play_audio)
         self.audio_thread.daemon = True
         self.audio_thread.start()
 
     def play_audio(self):
+        # Function to continuously check for playback and update progress bar
         while True:
             if self.current_song and mixer.music.get_busy() and not self.paused:
                 time.sleep(0.1)
@@ -92,6 +104,7 @@ class MusicPlayerApp:
                 time.sleep(0.1)
 
     def play_music(self):
+        # Function to play music
         if self.paused:
             mixer.music.unpause()
             self.paused = False
@@ -109,12 +122,14 @@ class MusicPlayerApp:
             self.update_progress_bar(total_length)
 
     def pause_music(self):
+        # Function to pause music
         mixer.music.pause()
         self.paused = True
         if self.update_id:
             self.root.after_cancel(self.update_id)
 
     def update_progress_bar(self, total_length=None):
+        # Function to update progress bar based on playback
         if total_length is None:
             audio = eyed3.load(self.current_song)
             total_length = audio.info.time_secs
@@ -132,6 +147,7 @@ class MusicPlayerApp:
             self.time_label.config(text='Time Left: 0:00')
 
     def add_music(self):
+        # Function to add music to the playlist
         if mixer.music.get_busy():
             mixer.music.stop()
 
@@ -148,6 +164,7 @@ class MusicPlayerApp:
 
     @staticmethod
     def display_album_art(filename):
+        # Function to display album art for the current song
         audiofile = eyed3.load(filename)
         if audiofile.tag and audiofile.tag.images:
             image_data = audiofile.tag.images[0].image_data
@@ -166,6 +183,7 @@ class MusicPlayerApp:
         label.place(x=55, y=0, width=485, height=400)
 
     def __del__(self):
+        # Cleanup when the instance is destroyed
         mixer.quit()
 
 
