@@ -12,15 +12,6 @@ from pygame import mixer
 mixer.init()
 
 
-def change_theme():
-    # Function to change the theme between dark and light
-    current_theme = sv_ttk.get_theme()
-    if current_theme == 'dark':
-        sv_ttk.set_theme('light')
-    else:
-        sv_ttk.set_theme('dark')
-
-
 class MusicPlayerApp:
     def __init__(self, root):
         self.root = root
@@ -54,7 +45,7 @@ class MusicPlayerApp:
 
     def setup_music_frame(self):
         # Set up frame for displaying album art and song information
-        self.music_frame = ttk.Frame(self.root, relief=RIDGE)
+        self.music_frame = ttk.Frame(self.root)
         self.music_frame.place(x=0, y=530, width=485, height=170)
 
     def setup_lower_frame(self):
@@ -64,10 +55,12 @@ class MusicPlayerApp:
 
     def setup_buttons(self):
         # Set up control buttons
-        ttk.Button(self.root, text='Play', width=12, command=self.play_music).place(x=120, y=455)
+        ttk.Button(self.root, text='Play', width=12, command=self.play_music).place(x=115, y=455)
         ttk.Button(self.root, text='Pause', width=12, command=self.pause_music).place(x=255, y=455)
         ttk.Button(self.root, text='Browse Music', width=58, command=self.add_music).place(x=0, y=499)
-        ttk.Button(self.root, text='☉', width=2, command=change_theme).place(x=0, y=0)  # Theme change button
+        ttk.Button(self.root, text='/', width=1, command=self.change_theme).place(x=10, y=10)
+        ttk.Button(self.root, text='+', width=1, command=self.vol_up).place(x=10, y=420)
+        ttk.Button(self.root, text='-', width=1, command=self.vol_down).place(x=10, y=455)
 
     def setup_time_label(self):
         # Label to display remaining time
@@ -82,7 +75,7 @@ class MusicPlayerApp:
     def setup_playlist(self):
         # Playlist to display available songs
         self.scroll = Scrollbar(self.music_frame)
-        self.playlist = Listbox(self.music_frame, width=100, selectbackground='lightblue',
+        self.playlist = Listbox(self.music_frame, width=100, selectbackground='#4287f5',
                                 cursor='hand2', bd=0, yscrollcommand=self.scroll.set)
         self.scroll.config(command=self.playlist.yview)
         self.scroll.pack(side=RIGHT, fill=Y)
@@ -93,6 +86,14 @@ class MusicPlayerApp:
         self.audio_thread = threading.Thread(target=self.play_audio)
         self.audio_thread.daemon = True
         self.audio_thread.start()
+
+    @staticmethod
+    def vol_up():
+        mixer.music.set_volume(min(1.0, mixer.music.get_volume() + 0.1))
+
+    @staticmethod
+    def vol_down():
+        mixer.music.set_volume(max(0.0, mixer.music.get_volume() - 0.1))
 
     def play_audio(self):
         # Function to continuously check for playback and update progress bar
@@ -180,6 +181,15 @@ class MusicPlayerApp:
         label = ttk.Label(image=photo)
         label.image = photo
         label.place(x=55, y=0, width=485, height=400)
+
+    @staticmethod
+    def change_theme():
+        # Function to change the theme between dark and light
+        current_theme = sv_ttk.get_theme()
+        if current_theme == 'dark':
+            sv_ttk.set_theme('light')
+        else:
+            sv_ttk.set_theme('dark')
 
     def __del__(self):
         # Cleanup when the instance is destroyed
