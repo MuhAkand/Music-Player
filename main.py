@@ -117,6 +117,10 @@ class MusicPlayerApp:
         mixer.music.pause()
         self.paused = True
 
+        # Cancel any scheduled updates from the previous song
+        if self.update_id:
+            self.root.after_cancel(self.update_id)
+
     def updateProgressBar(self, totalLength=None):
         # Update the progress bar
         if totalLength is None:
