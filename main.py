@@ -7,7 +7,6 @@ from tkinter import filedialog, ttk
 import eyed3
 from PIL import Image, ImageTk
 from pygame import mixer
-import emoji
 
 # Initialize mixer
 mixer.init()
