@@ -1,12 +1,13 @@
-from tkinter import *
-from tkinter import filedialog, ttk
-import sv_ttk
-from pygame import mixer
 import os
-from PIL import Image, ImageTk
-import eyed3
 import threading
 import time
+from tkinter import *
+from tkinter import filedialog, ttk
+
+import eyed3
+import sv_ttk
+from PIL import Image, ImageTk
+from pygame import mixer
 
 # Initialize the mixer
 mixer.init()
@@ -57,7 +58,7 @@ class MusicPlayerApp:
         ttk.Button(self.root, text='Pause', width=12, command=self.pauseMusic).place(x=255, y=455)
 
         # Create time label
-        self.timeLabel = Label(self.root, text="")
+        self.timeLabel = Label(self.root, text='')
         self.timeLabel.place(x=210, y=410)
 
         # Create progress bar
@@ -67,8 +68,8 @@ class MusicPlayerApp:
         # Create browse music button and playlist
         ttk.Button(self.root, text='Browse Music', width=58, command=self.addMusic).place(x=0, y=499)
         self.scroll = Scrollbar(self.musicFrame)
-        self.playlist = Listbox(self.musicFrame, width=100, bg="#333333", fg="grey", selectbackground="lightblue",
-                                cursor="hand2", bd=0, yscrollcommand=self.scroll.set)
+        self.playlist = Listbox(self.musicFrame, width=100, bg='#333333', fg='grey', selectbackground='lightblue',
+                                cursor='hand2', bd=0, yscrollcommand=self.scroll.set)
         self.scroll.config(command=self.playlist.yview)
         self.scroll.pack(side=RIGHT, fill=Y)
         self.playlist.pack(side=RIGHT, fill=BOTH)
@@ -85,7 +86,8 @@ class MusicPlayerApp:
                 self.progressBar['value'] = progressPercent
                 remainingTime = totalLength - elapsedTime
                 mins, secs = divmod(remainingTime, 60)
-                self.timeLabel.config(text=f"Time Left: {int(mins)}:{int(secs):02d}")
+                if mins and secs != '0':
+                    self.timeLabel.config(text=f'Time Left: {int(mins)}:{int(secs):02d}')
 
             time.sleep(0.1)  # Adjust as needed for smoother UI updates
 
@@ -133,13 +135,13 @@ class MusicPlayerApp:
             self.progressBar['value'] = progressPercent
             remainingTime = totalLength - elapsedTime
             mins, secs = divmod(remainingTime, 60)
-            self.timeLabel.config(text=f"Time Left: {int(mins)}:{int(secs):02d}")
+            self.timeLabel.config(text=f'Time Left: {int(mins)}:{int(secs):02d}')
             self.update_id = self.root.after(1000, lambda: self.updateProgressBar(
                 totalLength))  # Schedule next update after 1 second
         else:
             # Reset progress bar and time label
             self.progressBar['value'] = 0
-            self.timeLabel.config(text="Time Left: 0:00")
+            self.timeLabel.config(text='Time Left: 0:00')
 
     def addMusic(self):
         # Stop the currently playing song, if any
@@ -167,8 +169,8 @@ class MusicPlayerApp:
             # Album art available, display it
             imageData = audiofile.tag.images[0].image_data
             imageExtension = audiofile.tag.images[0].mime_type.split('/')[-1]
-            albumArtPath = f"{filename[:-4]}.{imageExtension}"
-            with open(albumArtPath, "wb") as imgFile:
+            albumArtPath = f'{filename[:-4]}.{imageExtension}'
+            with open(albumArtPath, 'wb') as imgFile:
                 imgFile.write(imageData)
 
             image = Image.open(albumArtPath)
@@ -188,7 +190,7 @@ class MusicPlayerApp:
         mixer.quit()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app = Tk()
     MusicPlayerApp(app)
     app.mainloop()
