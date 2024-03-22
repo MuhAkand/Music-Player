@@ -7,9 +7,18 @@ from tkinter import filedialog, ttk
 import eyed3
 from PIL import Image, ImageTk
 from pygame import mixer
+import emoji
 
 # Initialize mixer
 mixer.init()
+
+
+def change_theme():
+    current_theme = sv_ttk.get_theme()
+    if current_theme == 'dark':
+        sv_ttk.set_theme('light')
+    else:
+        sv_ttk.set_theme('dark')
 
 
 class MusicPlayerApp:
@@ -52,6 +61,7 @@ class MusicPlayerApp:
         ttk.Button(self.root, text='Play', width=12, command=self.play_music).place(x=120, y=455)
         ttk.Button(self.root, text='Pause', width=12, command=self.pause_music).place(x=255, y=455)
         ttk.Button(self.root, text='Browse Music', width=58, command=self.add_music).place(x=0, y=499)
+        ttk.Button(self.root, text='☉', width=2, command=change_theme).place(x=0, y=0)
 
     def setup_time_label(self):
         self.time_label = Label(self.root, text='')
@@ -148,7 +158,7 @@ class MusicPlayerApp:
             image = Image.open(album_art_path)
             image.thumbnail((485, 377))
         else:
-            image = Image.new('RGB', (380, 377), color='white')
+            image = Image.new('RGB', (380, 377), color='gray')
 
         photo = ImageTk.PhotoImage(image)
         label = ttk.Label(image=photo)
