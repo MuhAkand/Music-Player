@@ -82,7 +82,7 @@ class MusicPlayerApp:
     def setup_playlist(self):
         # Playlist to display available songs
         self.scroll = Scrollbar(self.music_frame)
-        self.playlist = Listbox(self.music_frame, width=100, bg='#333333', fg='grey', selectbackground='lightblue',
+        self.playlist = Listbox(self.music_frame, width=100, selectbackground='lightblue',
                                 cursor='hand2', bd=0, yscrollcommand=self.scroll.set)
         self.scroll.config(command=self.playlist.yview)
         self.scroll.pack(side=RIGHT, fill=Y)
