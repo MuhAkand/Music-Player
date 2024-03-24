@@ -87,14 +87,6 @@ class MusicPlayerApp:
         self.audio_thread.daemon = True
         self.audio_thread.start()
 
-    @staticmethod
-    def vol_up():
-        mixer.music.set_volume(min(1.0, mixer.music.get_volume() + 0.1))
-
-    @staticmethod
-    def vol_down():
-        mixer.music.set_volume(max(0.0, mixer.music.get_volume() - 0.1))
-
     def play_audio(self):
         # Function to continuously check for playback and update progress bar
         while True:
@@ -161,6 +153,14 @@ class MusicPlayerApp:
                 if song.endswith('.mp3'):
                     self.playlist.insert(END, song)
                     self.display_album_art(song)
+
+    @staticmethod
+    def vol_up():
+        mixer.music.set_volume(min(1.0, mixer.music.get_volume() + 0.1))
+
+    @staticmethod
+    def vol_down():
+        mixer.music.set_volume(max(0.0, mixer.music.get_volume() - 0.1))
 
     @staticmethod
     def display_album_art(filename):
